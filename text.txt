@@ -1,0 +1,11 @@
+
+
+folder Structure
+
+what is ,why we used
+config,
+controller,
+env.,
+modles,
+routes,
+etc
