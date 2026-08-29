@@ -27,24 +27,28 @@ const orderSchema = new mongoose.Schema(
 
                 quantity: {
                     type: Number,
-                    required: true
+                    required: true,
+                    min: 1
                 },
 
                 price: {
                     type: Number,
-                    required: true
+                    required: true,
+                    min: 0
                 }
             }
         ],
 
         totalItems: {
             type: Number,
-            required: true
+            required: true,
+            min: 1
         },
 
         totalPrice: {
             type: Number,
-            required: true
+            required: true,
+            min: 0
         },
 
         address: {
@@ -93,7 +97,11 @@ const orderSchema = new mongoose.Schema(
 
         paymentStatus: {
             type: String,
-            enum: ["Pending", "Paid", "Failed"],
+            enum: [
+                "Pending",
+                "Paid",
+                "Failed"
+            ],
             default: "Pending"
         }
     },

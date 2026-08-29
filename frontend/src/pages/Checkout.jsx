@@ -61,8 +61,7 @@ const Checkout = () => {
         },
         0
     );
-
-    const placeOrder = () => {
+    const placeOrder = async () => {
         if (!address) {
             alert("Please add delivery address first");
             return;
@@ -73,9 +72,26 @@ const Checkout = () => {
             return;
         }
 
-        const orderId = "ORD-" + Date.now();
+        try {
+            const response = await api.post("/orders/create", {
+                userId,
+                address
+            });
 
-        navigate(`/order-success/${orderId}`);
+            console.log("Order Response:", response.data);
+
+            if (response.data.success) {
+                navigate(`/order-success/${response.data.order._id}`);
+            }
+        } catch (error) {
+            console.log("Place Order Error:", error);
+            console.log("Server Error:", error.response?.data);
+
+            alert(
+                error.response?.data?.message ||
+                "Order place nahi hua"
+            );
+        }
     };
 
     if (loading) {

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Order from "../models/order.js";
 import Cart from "../models/cart.js";
 
@@ -9,6 +10,13 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "User ID is required"
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid userId"
             });
         }
 
@@ -29,12 +37,23 @@ export const createOrder = async (req, res) => {
             });
         }
 
-        const items = cart.items.map((item) => ({
+        const validItems = cart.items.filter(
+            (item) => item.productId
+        );
+
+        if (validItems.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No valid products found in cart"
+            });
+        }
+
+        const items = validItems.map((item) => ({
             productId: item.productId._id,
             title: item.productId.title,
             image: item.productId.image,
-            price: item.productId.price,
-            quantity: item.quantity
+            price: Number(item.productId.price),
+            quantity: Number(item.quantity)
         }));
 
         const totalItems = items.reduce(
@@ -53,14 +72,20 @@ export const createOrder = async (req, res) => {
             items,
             totalItems,
             totalPrice,
-            address,
+            address: {
+                fullName: address.fullName,
+                phone: address.phone,
+                address: address.address,
+                city: address.city,
+                postalCode: address.postalCode
+            },
             paymentMethod: "Cash on Delivery"
         });
 
         cart.items = [];
         await cart.save();
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
             message: "Order placed successfully",
             order
@@ -69,7 +94,7 @@ export const createOrder = async (req, res) => {
     } catch (error) {
         console.error("Create Order Error:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         });
@@ -80,11 +105,18 @@ export const getUserOrders = async (req, res) => {
     try {
         const { userId } = req.params;
 
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid userId"
+            });
+        }
+
         const orders = await Order.find({ userId })
             .populate("items.productId")
             .sort({ createdAt: -1 });
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             orders
         });
@@ -92,7 +124,7 @@ export const getUserOrders = async (req, res) => {
     } catch (error) {
         console.error("Get Orders Error:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         });
@@ -102,6 +134,13 @@ export const getUserOrders = async (req, res) => {
 export const getOrder = async (req, res) => {
     try {
         const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid order id"
+            });
+        }
 
         const order = await Order.findById(id)
             .populate("userId", "name email")
@@ -114,7 +153,7 @@ export const getOrder = async (req, res) => {
             });
         }
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             order
         });
@@ -122,7 +161,7 @@ export const getOrder = async (req, res) => {
     } catch (error) {
         console.error("Get Order Error:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         });
